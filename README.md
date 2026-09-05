@@ -17,6 +17,22 @@ grounded in the actual `Asset Detail` sheet supplied for the pilot
 - Postgres + Vercel Blob out of the box; ships with `vercel.json` and
   a one-click deploy button.
 
+## 👀 Preview in your browser first (no install, no deploy)
+
+Want to see it working before deciding anything?
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/gautamjha0609-cpu/hospital-asset-management?quickstart=1&ref=claude/hospital-asset-mapping-system-tddg6r)
+
+Click the badge → **Create codespace on branch** → wait ~2 minutes.
+Codespaces spins up a Postgres container, pushes the schema, seeds
+demo data, and starts the dev server. When it's ready a notification
+pops up saying **"Your application running on port 3000 is available"**
+— click **Open in Browser** to see the app. Sign in with
+`admin@hospital.local` / `ChangeMe!Admin2026`.
+
+GitHub gives every account 60 free Codespaces hours/month on Hobby,
+so previewing is effectively free.
+
 ## 🚀 Deploy to Vercel (one click)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgautamjha0609-cpu%2Fhospital-asset-management&project-name=hospital-asset-management&repository-name=hospital-asset-management&env=NEXTAUTH_SECRET,SEED_ADMIN_EMAIL,SEED_ADMIN_PASSWORD&envDescription=NEXTAUTH_SECRET%20%3D%20openssl%20rand%20-base64%2032%20%7C%20SEED_ADMIN_%2A%20%3D%20your%20first%20admin%20login&envLink=https%3A%2F%2Fgithub.com%2Fgautamjha0609-cpu%2Fhospital-asset-management%2Fblob%2Fmain%2F.env.example&stores=%5B%7B%22type%22%3A%22postgres%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)

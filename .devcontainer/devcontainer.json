@@ -1,0 +1,50 @@
+{
+  "name": "Hospital Asset Management",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "forwardPorts": [3000, 5432],
+  "portsAttributes": {
+    "3000": {
+      "label": "Hospital Asset Management (Next.js)",
+      "onAutoForward": "openBrowser"
+    },
+    "5432": { "label": "Postgres (dev)", "onAutoForward": "ignore" }
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postAttachCommand": {
+    "server": "npm run dev"
+  },
+
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql://postgres:postgres@db:5432/hospital?schema=public",
+    "NEXTAUTH_SECRET": "codespaces-preview-secret-not-for-production",
+    "NEXTAUTH_URL": "http://localhost:3000",
+    "PUBLIC_APP_URL": "http://localhost:3000",
+    "STORAGE_DRIVER": "local",
+    "STORAGE_LOCAL_ROOT": "./storage/local",
+    "STORAGE_PUBLIC_BASE_URL": "/api/files",
+    "SEED_ADMIN_EMAIL": "admin@hospital.local",
+    "SEED_ADMIN_PASSWORD": "ChangeMe!Admin2026",
+    "SEED_USER_EMAIL": "user@hospital.local",
+    "SEED_USER_PASSWORD": "ChangeMe!User2026"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

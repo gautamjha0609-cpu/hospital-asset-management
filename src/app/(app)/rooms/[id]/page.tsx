@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import { ROOM_TYPE_LABEL, type RoomType } from "@/lib/location";
+import { displayName } from "@/lib/asset";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function RoomPage(props: {
                 <td className="font-mono text-xs">{a.tagCode ?? "—"}</td>
                 <td className="max-w-lg">
                   <Link className="text-brand-700 hover:underline" href={`/assets/${a.publicId}`}>
-                    {a.description}
+                    {displayName(a)}
                   </Link>
                 </td>
                 <td>{a.assetType}</td>

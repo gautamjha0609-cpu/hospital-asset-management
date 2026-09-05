@@ -5,6 +5,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AssetFilters } from "@/components/AssetFilters";
 import type { Prisma } from "@prisma/client";
 import { Plus, Download } from "lucide-react";
+import { displayName } from "@/lib/asset";
 
 export const dynamic = "force-dynamic";
 
@@ -119,9 +120,12 @@ export default async function AssetsPage(props: {
               <tr key={a.id}>
                 <td className="font-mono text-xs">{a.tagCode ?? "—"}</td>
                 <td className="max-w-md">
-                  <Link href={`/assets/${a.publicId}`} className="text-brand-700 hover:underline">
-                    {a.description}
+                  <Link href={`/assets/${a.publicId}`} className="text-brand-700 hover:underline font-medium">
+                    {displayName(a)}
                   </Link>
+                  {a.name && a.name !== a.description && (
+                    <div className="text-[11px] text-gray-500 truncate">{a.description}</div>
+                  )}
                 </td>
                 <td className="text-xs">
                   <div>{a.majorCategory?.name}</div>

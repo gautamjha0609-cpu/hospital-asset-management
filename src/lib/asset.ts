@@ -57,8 +57,14 @@ export const assetUpdateSchema = assetCreateSchema.partial();
 export type AssetInput = z.infer<typeof assetCreateSchema>;
 
 export function displayName(a: {
-  tagCode: string | null;
+  name?: string | null;
+  tagCode?: string | null;
   description: string;
 }) {
-  return a.tagCode ?? a.description.slice(0, 80);
+  // Preference order: PO-derived name -> physical tag -> truncated description.
+  const n = a.name?.trim();
+  if (n) return n;
+  const t = a.tagCode?.trim();
+  if (t) return t;
+  return a.description.slice(0, 80);
 }

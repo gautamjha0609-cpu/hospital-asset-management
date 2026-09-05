@@ -198,6 +198,7 @@ model Asset {
   tagCode             String?  @unique                  // FAR No. (Tag) — optional
   outsourceFarCode    String?                           // dept-owned tag
 
+  name                String?  // Primary display name — set from "PO: Item Description" on import when present, else falls back to `description` in UI
   description         String
   assetType           String   @default("MOVABLE") // MOVABLE | IMMOVABLE
   status              String   @default("ACTIVE")  // ACTIVE | INACTIVE | CONDEMNED | WIP | LOST | UNDER_REPAIR

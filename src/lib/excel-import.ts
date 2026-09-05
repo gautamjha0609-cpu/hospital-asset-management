@@ -175,9 +175,17 @@ export async function importAssetsFromBuffer(
         const netBlock = toNumberOrNull(rec["Net Block (WDV) as at 31.03.2025"]);
         const tangibility = toTangibility(rec["Tangible / Intangible"]);
 
+        // Prefer the PO's cleaner "Item Description" as the human-facing
+        // asset name when it exists; the workbook's own `Description`
+        // column stays as the long-form description.
+        const poItem = rec["PO: Item Description"];
+        const name =
+          poItem && String(poItem).trim() ? String(poItem).trim() : null;
+
         const upsertData = {
           workbookRowId: workbookRowId ?? undefined,
           tagCode,
+          name,
           description,
           assetClass: normalizeAssetClass(rec["Asset Class"]),
           plantCode: normalizePlantCode(rec["Plant"]),

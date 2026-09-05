@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
+import { displayName } from "@/lib/asset";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function SearchPage(props: {
                   <td className="font-mono text-xs">{a.tagCode ?? "—"}</td>
                   <td className="max-w-md">
                     <Link className="text-brand-700 hover:underline" href={`/assets/${a.publicId}`}>
-                      {a.description}
+                      {displayName(a)}
                     </Link>
                   </td>
                   <td className="text-xs">{a.majorCategory?.name}</td>

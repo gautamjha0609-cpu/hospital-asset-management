@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { assetUrl } from "@/lib/env";
+import { displayName } from "@/lib/asset";
 import {
   MapPin,
   Edit,
@@ -61,9 +62,14 @@ export default async function AssetDetailPage(props: {
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-mono text-gray-500">{asset.publicId}</div>
-          <h1 className="text-2xl font-semibold">{asset.tagCode ?? "Untagged asset"}</h1>
-          <p className="text-sm text-gray-600 max-w-3xl">{asset.description}</p>
+          <div className="text-xs text-gray-500 flex gap-2 items-center">
+            <span className="font-mono">{asset.publicId}</span>
+            {asset.tagCode && <span className="tag">Tag {asset.tagCode}</span>}
+          </div>
+          <h1 className="text-2xl font-semibold">{displayName(asset)}</h1>
+          {asset.name && asset.name !== asset.description && (
+            <p className="text-sm text-gray-600 max-w-3xl mt-1">{asset.description}</p>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           {asset.roomId && (

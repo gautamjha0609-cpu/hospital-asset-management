@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: 249 250 251;
+  --color-fg: 17 24 39;
+  --color-muted: 107 114 128;
+  --color-border: 229 231 235;
+  --color-card: 255 255 255;
+}
+
+html,
+body {
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-fg));
+  font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+}
+
+.card {
+  background: rgb(var(--color-card));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 0.75rem;
+}
+
+.input {
+  @apply block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-50;
+}
+.btn-primary {
+  @apply btn bg-brand-600 px-3.5 py-2 text-white hover:bg-brand-700;
+}
+.btn-secondary {
+  @apply btn border border-gray-300 bg-white px-3.5 py-2 text-gray-700 hover:bg-gray-50;
+}
+.btn-danger {
+  @apply btn bg-red-600 px-3.5 py-2 text-white hover:bg-red-700;
+}
+.btn-ghost {
+  @apply btn px-3 py-2 text-gray-700 hover:bg-gray-100;
+}
+
+.tag {
+  @apply inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700;
+}
+.tag-blue {
+  @apply tag bg-blue-100 text-blue-700;
+}
+.tag-green {
+  @apply tag bg-emerald-100 text-emerald-700;
+}
+.tag-amber {
+  @apply tag bg-amber-100 text-amber-700;
+}
+.tag-red {
+  @apply tag bg-red-100 text-red-700;
+}
+
+.table {
+  @apply w-full border-collapse text-sm;
+}
+.table th {
+  @apply border-b border-gray-200 bg-gray-50 px-3 py-2 text-left font-medium text-gray-600;
+}
+.table td {
+  @apply border-b border-gray-100 px-3 py-2 align-top;
+}
+
+.map-canvas {
+  touch-action: none;
+  user-select: none;
+}

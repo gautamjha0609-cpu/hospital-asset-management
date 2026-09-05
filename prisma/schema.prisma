@@ -1,0 +1,517 @@
+// Hospital Asset Management System — Prisma schema
+//
+// SQLite is used for local dev (zero-setup). The schema stays
+// Postgres-compatible so switching for production is one env change:
+//   provider = "postgresql"
+//   DATABASE_URL="postgresql://..."
+// SQLite quirks: no Decimal (falls back to Float), no arrays, no enums.
+// We work around those by using String for enums and JSON strings for
+// small unbounded lists (geometry etc.).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ----- Auth / RBAC ---------------------------------------------------------
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  role           String   @default("USER") // "ADMIN" | "USER"
+  passwordHash   String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdAssets  Asset[]           @relation("AssetCreatedBy")
+  updatedAssets  Asset[]           @relation("AssetUpdatedBy")
+  auditLogs      AuditLog[]
+  movements      AssetLocationHistory[] @relation("MovedByUser")
+  importJobs     ImportJob[]
+}
+
+// ----- Location hierarchy --------------------------------------------------
+
+model Hospital {
+  id        String    @id @default(cuid())
+  name      String
+  code      String    @unique
+  address   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  buildings Building[]
+}
+
+model Building {
+  id         String   @id @default(cuid())
+  hospitalId String?
+  name       String
+  code       String
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  hospital   Hospital? @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
+  floors     Floor[]
+
+  @@unique([hospitalId, code])
+  @@index([code])
+}
+
+model Floor {
+  id          String   @id @default(cuid())
+  buildingId  String
+  name        String
+  floorNumber Int
+  levelIndex  Int      @default(0) // sort order (basement=-1 etc.)
+  planWidth   Float    @default(2000) // svg viewport w
+  planHeight  Float    @default(1400) // svg viewport h
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  building    Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  rooms       Room[]
+  mapObjects  MapObject[]
+  assets      Asset[]
+
+  @@unique([buildingId, floorNumber])
+  @@index([buildingId])
+}
+
+// A room / corridor / any addressable area on a floor.
+// Geometry is a JSON string of polygon points: [{x,y}, ...]
+model Room {
+  id          String   @id @default(cuid())
+  floorId     String
+  name        String
+  code        String
+  type        String   @default("ROOM") // ROOM | CORRIDOR | STORE | WARD | ICU | OFFICE | LAB | DEPARTMENT | PARKING | UTILITY | OPEN_AREA | OTHER
+  description String?
+  geometry    String   // JSON: {"points":[{"x":0,"y":0},...]}
+  labelX      Float?
+  labelY      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  floor       Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  assets      Asset[]
+  history     AssetLocationHistory[]
+
+  @@unique([floorId, code])
+  @@index([floorId])
+  @@index([type])
+}
+
+// Walls, doors, windows, labels, images placed on a floor plan.
+// Kind determines how "data" JSON is interpreted.
+model MapObject {
+  id        String   @id @default(cuid())
+  floorId   String
+  kind      String   // WALL | DOOR | WINDOW | LABEL | IMAGE | LINE
+  data      String   // JSON — shape-specific payload
+  zIndex    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  floor     Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@index([floorId])
+  @@index([kind])
+}
+
+// ----- Reference data ------------------------------------------------------
+
+model MajorCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  assets    Asset[]
+  finals    FinalCategory[]
+}
+
+model FinalCategory {
+  id              String  @id @default(cuid())
+  name            String
+  majorCategoryId String?
+  createdAt       DateTime @default(now())
+  major           MajorCategory? @relation(fields: [majorCategoryId], references: [id], onDelete: SetNull)
+  subs            SubCategory[]
+  assets          Asset[]
+
+  @@unique([majorCategoryId, name])
+}
+
+model SubCategory {
+  id                 String  @id @default(cuid())
+  name               String
+  finalCategoryId    String?
+  glCode             Int?
+  glDescription      String?
+  depreciationRate   Float?
+  createdAt          DateTime @default(now())
+  final              FinalCategory? @relation(fields: [finalCategoryId], references: [id], onDelete: SetNull)
+  assets             Asset[]
+
+  @@unique([finalCategoryId, name])
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  aliases   String?  // JSON array of alternative spellings from the workbook
+  vendorCode String? @unique
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  assets    Asset[]
+}
+
+model CostCenter {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  assets    Asset[]
+}
+
+// ----- Asset ---------------------------------------------------------------
+
+model Asset {
+  id                  String   @id @default(cuid())
+  publicId            String   @unique @default(cuid()) // used in URLs, QR
+  workbookRowId       Int?     @unique                  // Excel Row ID for round-trip
+  tagCode             String?  @unique                  // FAR No. (Tag) — optional
+  outsourceFarCode    String?                           // dept-owned tag
+
+  description         String
+  assetType           String   @default("MOVABLE") // MOVABLE | IMMOVABLE
+  status              String   @default("ACTIVE")  // ACTIVE | INACTIVE | CONDEMNED | WIP | LOST | UNDER_REPAIR
+  condition           String?                       // GOOD | FAIR | POOR
+
+  assetClass          String?
+  tangibility         String?  // TANGIBLE | INTANGIBLE
+  capitalized         Boolean  @default(true)
+
+  costGrossBlock      Float    @default(0)
+  netBlock            Float?
+  voucherDate         DateTime?
+  voucherNumber       String?
+  effectiveCapitalizationDate DateTime?
+  depreciationKey     String?
+
+  serialNumber        String?
+  modelNumber         String?
+  manufacturer        String?
+  barcode             String?
+  qrValue             String?
+  warrantyExpiry      DateTime?
+
+  majorCategoryId     String?
+  finalCategoryId     String?
+  subCategoryId       String?
+  vendorId            String?
+  departmentId        String?
+  costCenterId        String?
+  plantCode           String?
+  glCode              Int?
+
+  // Current location (denormalized for fast reads)
+  buildingId          String?
+  floorId             String?
+  roomId              String?
+  mapX                Float?
+  mapY                Float?
+  mapRotation         Float?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  createdById         String?
+  updatedById         String?
+
+  majorCategory       MajorCategory? @relation(fields: [majorCategoryId], references: [id], onDelete: SetNull)
+  finalCategory       FinalCategory? @relation(fields: [finalCategoryId], references: [id], onDelete: SetNull)
+  subCategory         SubCategory?   @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+  vendor              Vendor?        @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  department          Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  costCenter          CostCenter?    @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  floor               Floor?         @relation(fields: [floorId], references: [id], onDelete: SetNull)
+  room                Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  createdBy           User?          @relation("AssetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy           User?          @relation("AssetUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  purchaseLine        AssetPurchaseLine?
+  depreciations       AssetDepreciation[]
+  images              AssetImage[]
+  documents           AssetDocument[]
+  locationHistory     AssetLocationHistory[]
+  statusHistory       AssetStatusHistory[]
+  customFieldValues   CustomFieldValue[]
+  importMeta          AssetImportMeta?
+
+  @@index([tagCode])
+  @@index([majorCategoryId])
+  @@index([finalCategoryId])
+  @@index([subCategoryId])
+  @@index([departmentId])
+  @@index([vendorId])
+  @@index([buildingId])
+  @@index([floorId])
+  @@index([roomId])
+  @@index([status])
+  @@index([assetType])
+}
+
+// The PO/vendor cluster from the workbook — nullable one-to-one.
+model AssetPurchaseLine {
+  id                    String   @id @default(cuid())
+  assetId               String   @unique
+  poLineUid             String?
+  poFinancialYear       String?
+  poNumber              String?
+  poDate                DateTime?
+  poVendorCode          String?
+  poVendorName          String?
+  poDocumentType        String?
+  poSourceFile          String?
+  poSlNo                Int?
+  poItemDescription     String?
+  poHsn                 Int?
+  poUnit                String?
+  poQty                 Float?
+  poFreeQty             Float?
+  poBaseRate            Float?
+  poDiscPct             Float?
+  poDiscAmt             Float?
+  poCgstRate            Float?
+  poCgstAmt             Float?
+  poSgstRate            Float?
+  poSgstAmt             Float?
+  poIgstRate            Float?
+  poIgstAmt             Float?
+  poDeliveryCharges     Float?
+  poLabourCess          Float?
+  poNetUnitPrice        Float?
+  poTotalAmount         Float?
+  poWorkOrderRegNo      String?
+  poLineFingerprint     String?
+  poIdenticalLineGroup  Int?
+  poOccurrenceInGroup   Int?
+  poMatchBasis          String?
+  poMatchConfidence     String?
+  poMatchScore          String?
+  poMatchNote           String?
+  poPdfFound            Boolean?
+
+  asset                 Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([poNumber])
+  @@index([poVendorName])
+}
+
+model AssetDepreciation {
+  id            String   @id @default(cuid())
+  assetId       String
+  fiscalYear    String   // e.g. "2024-25"
+  capDate       DateTime?
+  daysDep       Int?
+  depAmount     Float
+  accumUpto     Float
+
+  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, fiscalYear])
+  @@index([fiscalYear])
+}
+
+// Preserve the source workbook's data-quality metadata verbatim so it can be
+// re-exported and traced without polluting the main asset UI.
+model AssetImportMeta {
+  id                 String @id @default(cuid())
+  assetId            String @unique
+  assetClassSource   String?
+  outsourceStatus    String?
+  outsourceRemarks   String?
+  rbhResolution      String?
+  rbhConfidence      String?
+  rbhNote            String?
+  sourceRowJson      String? // JSON of the entire source row (for audit)
+  importJobId        String?
+
+  asset              Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  importJob          ImportJob? @relation(fields: [importJobId], references: [id], onDelete: SetNull)
+}
+
+// ----- Custom / dynamic fields --------------------------------------------
+
+model CustomField {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  label         String
+  type          String   // TEXT | NUMBER | DATE | CURRENCY | BOOLEAN | DROPDOWN | MULTI_SELECT | URL | LONG_TEXT
+  required      Boolean  @default(false)
+  options       String?  // JSON array for dropdown/multi-select
+  displayOrder  Int      @default(0)
+  appliesToCategory String? // optional Major/Final/Sub category filter (name)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  values        CustomFieldValue[]
+}
+
+model CustomFieldValue {
+  id            String  @id @default(cuid())
+  assetId       String
+  fieldId       String
+  value         String  // stored as string, cast per field.type
+
+  asset         Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  field         CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, fieldId])
+}
+
+// ----- Files ---------------------------------------------------------------
+
+model AssetImage {
+  id           String   @id @default(cuid())
+  assetId      String
+  filename     String
+  mimeType     String
+  size         Int
+  storagePath  String   // driver-relative
+  caption      String?
+  isPrimary    Boolean  @default(false)
+  uploadedAt   DateTime @default(now())
+  uploadedById String?
+
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+model AssetDocument {
+  id           String   @id @default(cuid())
+  assetId      String
+  kind         String   // INVOICE | PO | WARRANTY | MANUAL | CERTIFICATE | OTHER
+  filename     String
+  mimeType     String
+  size         Int
+  storagePath  String
+  uploadedAt   DateTime @default(now())
+  uploadedById String?
+
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([kind])
+}
+
+// ----- History -------------------------------------------------------------
+
+model AssetLocationHistory {
+  id          String   @id @default(cuid())
+  assetId     String
+  buildingId  String?
+  floorId     String?
+  roomId      String?
+  mapX        Float?
+  mapY        Float?
+  movedAt     DateTime @default(now())
+  movedById   String?
+  reason      String?
+  notes       String?
+
+  asset       Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  room        Room?  @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  movedBy     User?  @relation("MovedByUser", fields: [movedById], references: [id], onDelete: SetNull)
+
+  @@index([assetId])
+  @@index([movedAt])
+}
+
+model AssetStatusHistory {
+  id          String   @id @default(cuid())
+  assetId     String
+  oldStatus   String?
+  newStatus   String
+  changedAt   DateTime @default(now())
+  changedById String?
+  reason      String?
+
+  asset       Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+// ----- Audit / imports ----------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String   // CREATE | UPDATE | DELETE | MOVE | IMPORT | EXPORT | LOGIN | PERMISSION | MAP_EDIT
+  entity     String   // "asset" | "building" | ...
+  entityId   String?
+  before     String?  // JSON
+  after      String?  // JSON
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model ImportJob {
+  id            String   @id @default(cuid())
+  actorId       String?
+  filename      String
+  sheetName     String
+  status        String   @default("PENDING") // PENDING | VALIDATING | READY | IMPORTING | COMPLETED | FAILED
+  totalRows     Int      @default(0)
+  imported      Int      @default(0)
+  updated       Int      @default(0)
+  skipped       Int      @default(0)
+  duplicates    Int      @default(0)
+  errorCount    Int      @default(0)
+  mappingJson   String?  // column mapping chosen by admin
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+  summaryJson   String?
+
+  actor         User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  errors        ImportError[]
+  meta          AssetImportMeta[]
+
+  @@index([status])
+  @@index([actorId])
+}
+
+model ImportError {
+  id           String   @id @default(cuid())
+  importJobId  String
+  rowNumber    Int
+  column       String?
+  code         String   // e.g. INVALID_DATE, DUPLICATE_TAG, MISSING_REQUIRED
+  message      String
+  rowJson      String?  // JSON of the offending row
+
+  importJob    ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+
+  @@index([importJobId])
+}

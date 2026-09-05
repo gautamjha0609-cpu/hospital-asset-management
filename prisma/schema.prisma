@@ -1,19 +1,21 @@
 // Hospital Asset Management System — Prisma schema
 //
-// SQLite is used for local dev (zero-setup). The schema stays
-// Postgres-compatible so switching for production is one env change:
-//   provider = "postgresql"
-//   DATABASE_URL="postgresql://..."
-// SQLite quirks: no Decimal (falls back to Float), no arrays, no enums.
-// We work around those by using String for enums and JSON strings for
-// small unbounded lists (geometry etc.).
+// Postgres is the production database (Vercel Postgres, Neon, Supabase,
+// or any Postgres-compatible URL). Set DATABASE_URL to a `postgres://` /
+// `postgresql://` connection string. String is used for enum-like columns
+// (kept simple so migrations don't need custom types) and String for
+// small JSON payloads (room geometry etc.).
+//
+// Local dev with SQLite: change `provider` below to `"sqlite"` and set
+// DATABASE_URL="file:./prisma/dev.db". A dedicated SQLite migration will
+// be needed — see docs/DEPLOY.md.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

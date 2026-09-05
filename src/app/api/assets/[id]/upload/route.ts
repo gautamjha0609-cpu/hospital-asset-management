@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     const bytes = Buffer.from(await file.arrayBuffer());
     const ext = filename.split(".").pop() || "bin";
     const key = `assets/${asset.id}/${randomUUID()}.${ext}`;
-    await storage().put(key, bytes, mime);
+    const stored = await storage().put(key, bytes, mime);
 
     if (kind === "IMAGE" || mime.startsWith("image/")) {
       const rec = await prisma.assetImage.create({
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
           filename,
           mimeType: mime,
           size: bytes.length,
-          storagePath: key,
+          storagePath: stored.storagePath,
           uploadedById: admin.id,
         },
       });
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
         filename,
         mimeType: mime,
         size: bytes.length,
-        storagePath: key,
+        storagePath: stored.storagePath,
         uploadedById: admin.id,
       },
     });

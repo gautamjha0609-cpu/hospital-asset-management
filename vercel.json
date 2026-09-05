@@ -1,6 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "prisma generate && next build",
+  "buildCommand": "npm run vercel-build",
   "installCommand": "npm install --legacy-peer-deps",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/admin/import/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/assets/export/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }

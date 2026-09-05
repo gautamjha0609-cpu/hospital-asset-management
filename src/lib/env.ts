@@ -6,8 +6,10 @@ export const env = {
   PUBLIC_APP_URL:
     process.env.PUBLIC_APP_URL ??
     process.env.NEXTAUTH_URL ??
-    "http://localhost:3000",
-  STORAGE_DRIVER: (process.env.STORAGE_DRIVER as "local" | "s3") ?? "local",
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"),
+  STORAGE_DRIVER:
+    (process.env.STORAGE_DRIVER as "local" | "vercel-blob" | "s3") ??
+    (process.env.BLOB_READ_WRITE_TOKEN ? "vercel-blob" : "local"),
   STORAGE_LOCAL_ROOT: process.env.STORAGE_LOCAL_ROOT ?? "./storage/local",
   STORAGE_PUBLIC_BASE_URL:
     process.env.STORAGE_PUBLIC_BASE_URL ?? "/api/files",

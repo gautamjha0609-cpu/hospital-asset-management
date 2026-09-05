@@ -1,13 +1,21 @@
+// Idempotent seed. Safe to run on every deploy — uses upserts and
+// findFirst+create for models with nullable composite uniques (which
+// Prisma's upsert-by-compound-unique doesn't handle when a field is null).
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-async function upsertUser(email: string, password: string, role: "ADMIN" | "USER", name: string) {
+async function upsertUser(
+  email: string,
+  password: string,
+  role: "ADMIN" | "USER",
+  name: string
+) {
   const passwordHash = await bcrypt.hash(password, 10);
   return prisma.user.upsert({
     where: { email },
-    update: { passwordHash, role, name },
+    update: { role, name }, // don't reset password on every deploy
     create: { email, passwordHash, role, name },
   });
 }
@@ -37,7 +45,11 @@ async function main() {
     "Capital Work in Progress",
   ];
   for (const m of majors) {
-    await prisma.majorCategory.upsert({ where: { name: m }, update: {}, create: { name: m } });
+    await prisma.majorCategory.upsert({
+      where: { name: m },
+      update: {},
+      create: { name: m },
+    });
   }
   const finals = [
     ["Building", "Land & Building"],
@@ -53,55 +65,61 @@ async function main() {
   for (const [n, majorName] of finals) {
     const major = await prisma.majorCategory.findUnique({ where: { name: majorName } });
     if (!major) continue;
-    await prisma.finalCategory.upsert({
-      where: { majorCategoryId_name: { majorCategoryId: major.id, name: n } },
-      update: {},
-      create: { name: n, majorCategoryId: major.id },
+    const existing = await prisma.finalCategory.findFirst({
+      where: { name: n, majorCategoryId: major.id },
     });
+    if (!existing) {
+      await prisma.finalCategory.create({
+        data: { name: n, majorCategoryId: major.id },
+      });
+    }
   }
 
   const departments = ["Biomedical", "Engineering", "F&F", "IT", "Security"];
   for (const d of departments) {
-    await prisma.department.upsert({ where: { name: d }, update: {}, create: { name: d } });
+    await prisma.department.upsert({
+      where: { name: d },
+      update: {},
+      create: { name: d },
+    });
   }
 
   console.log("Seeding demo location hierarchy (clearly labelled)…");
-  const building = await prisma.building.upsert({
-    where: { hospitalId_code: { hospitalId: null as never, code: "DEMO" } as never },
-    create: { name: "Demo Hospital Building (sample data)", code: "DEMO" },
-    update: {},
-  }).catch(async () =>
-    // hospitalId is nullable — the composite upsert can't handle null on some SQLite
-    // versions, so fall back to findFirst + create.
-    (await prisma.building.findFirst({ where: { code: "DEMO" } })) ??
-      prisma.building.create({ data: { name: "Demo Hospital Building (sample data)", code: "DEMO" } })
-  );
+  const existingBuilding = await prisma.building.findFirst({ where: { code: "DEMO" } });
+  const building =
+    existingBuilding ??
+    (await prisma.building.create({
+      data: { name: "Demo Hospital Building (sample data)", code: "DEMO" },
+    }));
 
   async function ensureFloor(name: string, num: number) {
     return prisma.floor.upsert({
       where: { buildingId_floorNumber: { buildingId: building.id, floorNumber: num } },
       update: { name, planWidth: 1800, planHeight: 1200 },
-      create: { buildingId: building.id, name, floorNumber: num, levelIndex: num, planWidth: 1800, planHeight: 1200 },
+      create: {
+        buildingId: building.id,
+        name,
+        floorNumber: num,
+        levelIndex: num,
+        planWidth: 1800,
+        planHeight: 1200,
+      },
     });
   }
   const g = await ensureFloor("Ground Floor (demo)", 0);
   const f1 = await ensureFloor("First Floor (demo)", 1);
 
-  async function ensureRoom(floorId: string, code: string, name: string, type: string, points: { x: number; y: number }[]) {
+  async function ensureRoom(
+    floorId: string,
+    code: string,
+    name: string,
+    type: string,
+    points: { x: number; y: number }[]
+  ) {
     return prisma.room.upsert({
       where: { floorId_code: { floorId, code } },
-      update: {
-        name,
-        type,
-        geometry: JSON.stringify({ points }),
-      },
-      create: {
-        floorId,
-        code,
-        name,
-        type,
-        geometry: JSON.stringify({ points }),
-      },
+      update: { name, type, geometry: JSON.stringify({ points }) },
+      create: { floorId, code, name, type, geometry: JSON.stringify({ points }) },
     });
   }
   await ensureRoom(g.id, "G-01", "Reception (demo)", "OFFICE", [

@@ -12,6 +12,7 @@ import {
   History,
   Package,
 } from "lucide-react";
+import { AssetFilesPanel } from "@/components/AssetFilesPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -263,6 +264,12 @@ export default async function AssetDetailPage(props: {
           )}
         </div>
       </section>
+
+      <AssetFilesPanel
+        assetPublicId={asset.publicId}
+        files={{ images: asset.images, documents: asset.documents }}
+        canEdit={user?.role === "ADMIN"}
+      />
 
       {asset.customFieldValues.length > 0 && (
         <section className="card p-5">

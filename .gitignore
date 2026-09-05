@@ -12,6 +12,8 @@ test-results
 .env.*.local
 prisma/dev.db
 prisma/dev.db-journal
+prisma/prisma/
+tsconfig.tsbuildinfo
 storage/local/*
 !storage/local/.gitkeep
 .DS_Store

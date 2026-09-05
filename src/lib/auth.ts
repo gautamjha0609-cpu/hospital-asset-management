@@ -45,7 +45,7 @@ export const authOptions: AuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name ?? user.email,
-          role: user.role,
+          role: (user.role === "ADMIN" ? "ADMIN" : "USER") as "ADMIN" | "USER",
         };
       },
     }),
@@ -54,14 +54,16 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = (user as { id: string }).id;
-        token.role = (user as { role: string }).role;
+        const r = (user as { role?: string }).role;
+        token.role = r === "ADMIN" ? "ADMIN" : "USER";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
-        (session.user as { role?: string }).role = token.role as string;
+        const r = token.role;
+        (session.user as { role?: "ADMIN" | "USER" }).role = r === "ADMIN" ? "ADMIN" : "USER";
       }
       return session;
     },

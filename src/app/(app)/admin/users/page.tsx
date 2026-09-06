@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UserCreateForm } from "@/components/UserCreateForm";
+import { UserResetButton } from "@/components/UserResetButton";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function UsersAdmin() {
               <th>Name</th>
               <th>Role</th>
               <th>Created</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -37,6 +39,9 @@ export default async function UsersAdmin() {
                   <span className={u.role === "ADMIN" ? "tag-blue" : "tag"}>{u.role}</span>
                 </td>
                 <td className="text-xs text-gray-500">{formatDate(u.createdAt)}</td>
+                <td className="text-right">
+                  <UserResetButton userId={u.id} email={u.email} />
+                </td>
               </tr>
             ))}
           </tbody>

@@ -117,6 +117,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="text-sm font-medium truncate">{data?.user?.email}</div>
             <div className="text-xs text-gray-500">{role ?? "USER"}</div>
           </div>
+          <Link
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="w-full btn-ghost justify-start"
+          >
+            <ShieldCheck className="h-4 w-4" /> Account settings
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full btn-ghost justify-start"

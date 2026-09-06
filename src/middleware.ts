@@ -26,6 +26,8 @@ export default withAuth(
 export const config = {
   matcher: [
     // Protect all app routes except public ones and Next internals.
-    "/((?!login|api/auth|_next|favicon.ico|assets/.*/qr).*)",
+    // Public: /login, /forgot-password, /reset-password, /api/auth/*,
+    // Next internals, favicon, and the QR image endpoint.
+    "/((?!login|forgot-password|reset-password|api/auth|_next|favicon.ico|assets/.*/qr).*)",
   ],
 };

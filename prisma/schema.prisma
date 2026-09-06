@@ -37,6 +37,27 @@ model User {
   movements      AssetLocationHistory[] @relation("MovedByUser")
   verifications  AssetVerification[]
   importJobs     ImportJob[]
+  resetTokens    PasswordResetToken[]
+}
+
+// Hashed reset tokens. Never store the raw token (only its sha256).
+// One-time use — usedAt is set when consumed. Expires ~1 hour by
+// default. Requesting a new token invalidates unused prior ones for
+// the same user, so a stolen link stops working once the user asks
+// for another.
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+  createdIp  String?
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // ----- Location hierarchy --------------------------------------------------

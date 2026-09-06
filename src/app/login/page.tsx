@@ -88,11 +88,12 @@ function LoginInner() {
           <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </button>
-          <p className="text-xs text-gray-500 pt-1">
-            Default dev accounts (see <code>.env.example</code>):
-            <br />
-            admin@hospital.local / user@hospital.local
-          </p>
+          <div className="flex items-center justify-between pt-1">
+            <a href="/forgot-password" className="text-xs text-brand-700 hover:underline">
+              Forgot password?
+            </a>
+            <span className="text-[11px] text-gray-400">Trouble? Ask your admin.</span>
+          </div>
         </form>
       </div>
     </div>

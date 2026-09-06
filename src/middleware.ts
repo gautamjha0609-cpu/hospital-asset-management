@@ -27,7 +27,9 @@ export const config = {
   matcher: [
     // Protect all app routes except public ones and Next internals.
     // Public: /login, /forgot-password, /reset-password, /api/auth/*,
-    // Next internals, favicon, and the QR image endpoint.
-    "/((?!login|forgot-password|reset-password|api/auth|_next|favicon.ico|assets/.*/qr).*)",
+    // Next internals, favicon, PWA icons/manifest/service-worker,
+    // brand images, and the QR image endpoint (which needs to be
+    // scannable from unauthenticated devices — e.g. printed stickers).
+    "/((?!login|forgot-password|reset-password|api/auth|_next|favicon\\.ico|favicon\\.png|manifest\\.webmanifest|sw\\.js|icons/|brand/|assets/.*/qr).*)",
   ],
 };

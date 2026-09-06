@@ -2,7 +2,7 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Building2 } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   return (
@@ -45,11 +45,16 @@ function LoginInner() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="mt-3 text-xl font-semibold text-gray-900">
-            Hospital Asset Management
+          <Image
+            src="/brand/logo-640.png"
+            alt="CK Birla Hospitals | Rukmani Birla Hospital"
+            width={480}
+            height={140}
+            priority
+            className="mx-auto w-64 h-auto"
+          />
+          <h1 className="mt-4 text-lg font-semibold text-gray-900">
+            RBH Assets
           </h1>
           <p className="text-sm text-gray-500">Sign in to continue</p>
         </div>

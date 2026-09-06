@@ -6,7 +6,7 @@ import { assetUrl } from "./env";
 export async function exportAssetsToBuffer(where: Prisma.AssetWhereInput = {}) {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Asset Detail");
-  wb.creator = "Hospital Asset Management";
+  wb.creator = "RBH Assets — CK Birla Hospitals";
   wb.created = new Date();
 
   const columns = [

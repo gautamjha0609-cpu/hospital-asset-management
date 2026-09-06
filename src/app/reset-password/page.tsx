@@ -1,8 +1,9 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Building2, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function ResetPasswordPage() {
   return (
@@ -64,10 +65,14 @@ function ResetInner() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="mt-3 text-xl font-semibold text-gray-900">Set a new password</h1>
+          <Image
+            src="/brand/logo-640.png"
+            alt="CK Birla Hospitals | Rukmani Birla Hospital"
+            width={480}
+            height={140}
+            className="mx-auto w-56 h-auto"
+          />
+          <h1 className="mt-4 text-lg font-semibold text-gray-900">Set a new password</h1>
         </div>
 
         {check === null ? (

@@ -17,6 +17,7 @@ import {
   X,
   ScanLine,
 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -58,11 +59,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           "lg:translate-x-0"
         )}
       >
-        <div className="flex items-center gap-2 px-2 py-1 mb-4">
-          <div className="h-8 w-8 rounded-lg bg-brand-600 flex items-center justify-center">
-            <Building2 className="h-4 w-4 text-white" />
+        <div className="px-2 py-2 mb-3">
+          <Link href="/dashboard" onClick={() => setOpen(false)} className="block">
+            <Image
+              src="/brand/logo-320.png"
+              alt="CK Birla Hospitals | Rukmani Birla Hospital"
+              width={220}
+              height={62}
+              priority
+              className="w-full h-auto"
+            />
+          </Link>
+          <div className="mt-1 text-[10px] uppercase tracking-widest text-gray-500">
+            Assets
           </div>
-          <div className="font-semibold text-sm">HospitalAM</div>
         </div>
 
         <nav className="space-y-1 flex-1">

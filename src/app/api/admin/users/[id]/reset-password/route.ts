@@ -26,11 +26,11 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     if (isEmailConfigured()) {
       const r = await sendEmail({
         to: target.email,
-        subject: "Reset your HospitalAM password",
+        subject: "Reset your RBH Assets password",
         text:
           `Hi ${target.name ?? target.email},\n\n` +
-          `An admin has reset the password on your HospitalAM account.\n\n` +
-          `Set a new password (link expires in 1 hour, single-use):\n${link}\n\n— HospitalAM`,
+          `An admin has reset the password on your RBH Assets account.\n\n` +
+          `Set a new password (link expires in 1 hour, single-use):\n${link}\n\n— CK Birla Hospitals · Rukmani Birla Hospital`,
       });
       emailResult = r.ok
         ? { delivered: r.delivered }

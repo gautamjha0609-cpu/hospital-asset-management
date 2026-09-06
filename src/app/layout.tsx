@@ -4,13 +4,16 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { PWARegister } from "@/components/PWARegister";
 
 export const metadata: Metadata = {
-  title: "Hospital Asset Management",
+  title: {
+    default: "RBH Assets — CK Birla Hospitals",
+    template: "%s · RBH Assets",
+  },
   description:
-    "Map, track, and manage hospital assets across buildings and floors.",
+    "Map, track, and manage assets at Rukmani Birla Hospital (CK Birla Hospitals).",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "HospitalAM",
+    title: "RBH Assets",
     statusBarStyle: "default",
   },
   icons: {
@@ -24,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2563eb",
+  themeColor: "#1f2a44",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,

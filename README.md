@@ -1,7 +1,7 @@
-# Hospital Asset Management System
+# RBH Assets — CK Birla Hospitals
 
 A production-quality Next.js application for mapping, tracking, and
-managing hospital assets across buildings, floors, and rooms —
+managing assets at **Rukmani Birla Hospital** (CK Birla Hospitals),
 grounded in the actual `Asset Detail` sheet supplied for the pilot
 (19,406 asset lines, 93 columns).
 

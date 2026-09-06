@@ -33,7 +33,7 @@ export function PWARegister() {
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
     // @ts-expect-error non-standard
     const standalone = window.navigator.standalone === true;
-    const alreadyHinted = localStorage.getItem("hospitalam:iosHint") === "1";
+    const alreadyHinted = localStorage.getItem("rbh:iosHint") === "1";
     if (isIos && !standalone && !alreadyHinted) {
       setIosHint(true);
     }
@@ -50,7 +50,7 @@ export function PWARegister() {
   function closeIosHint() {
     setIosHint(false);
     try {
-      localStorage.setItem("hospitalam:iosHint", "1");
+      localStorage.setItem("rbh:iosHint", "1");
     } catch {
       /* noop */
     }
@@ -60,7 +60,7 @@ export function PWARegister() {
     return (
       <div className="fixed bottom-4 right-4 z-40 card p-3 shadow-lg flex items-center gap-3 max-w-sm">
         <div className="text-sm">
-          <div className="font-medium">Install HospitalAM</div>
+          <div className="font-medium">Install RBH Assets</div>
           <div className="text-xs text-gray-500">
             Get one-tap access from your home screen.
           </div>
@@ -86,7 +86,7 @@ export function PWARegister() {
           <div className="font-medium text-gray-900 mb-1">Install on your iPhone</div>
           Tap <span className="font-semibold">Share</span> then{" "}
           <span className="font-semibold">Add to Home Screen</span> to install
-          HospitalAM as an app.
+          RBH Assets as an app.
         </div>
         <button className="btn-ghost p-1" aria-label="Dismiss" onClick={closeIosHint}>
           <X className="h-4 w-4" />

@@ -89,7 +89,13 @@ async function main() {
   const building =
     existingBuilding ??
     (await prisma.building.create({
-      data: { name: "Demo Hospital Building (sample data)", code: "DEMO" },
+      data: {
+        // Placeholder — the admin should rename this to the real
+        // building (e.g. "RBH Main Building") after first login and add
+        // real floors + rooms before assigning assets.
+        name: "Rukmani Birla Hospital (please rename)",
+        code: "RBH-MAIN",
+      },
     }));
 
   async function ensureFloor(name: string, num: number) {
@@ -106,8 +112,8 @@ async function main() {
       },
     });
   }
-  const g = await ensureFloor("Ground Floor (demo)", 0);
-  const f1 = await ensureFloor("First Floor (demo)", 1);
+  const g = await ensureFloor("Ground Floor", 0);
+  const f1 = await ensureFloor("First Floor", 1);
 
   async function ensureRoom(
     floorId: string,
@@ -122,19 +128,19 @@ async function main() {
       create: { floorId, code, name, type, geometry: JSON.stringify({ points }) },
     });
   }
-  await ensureRoom(g.id, "G-01", "Reception (demo)", "OFFICE", [
+  await ensureRoom(g.id, "G-01", "Reception (sample — rename me)", "OFFICE", [
     { x: 100, y: 100 }, { x: 500, y: 100 }, { x: 500, y: 400 }, { x: 100, y: 400 },
   ]);
-  await ensureRoom(g.id, "G-02", "Emergency (demo)", "WARD", [
+  await ensureRoom(g.id, "G-02", "Emergency (sample — rename me)", "WARD", [
     { x: 550, y: 100 }, { x: 1000, y: 100 }, { x: 1000, y: 500 }, { x: 550, y: 500 },
   ]);
-  await ensureRoom(g.id, "G-CORR", "Main Corridor (demo)", "CORRIDOR", [
+  await ensureRoom(g.id, "G-CORR", "Main Corridor (sample — rename me)", "CORRIDOR", [
     { x: 100, y: 420 }, { x: 1600, y: 420 }, { x: 1600, y: 480 }, { x: 100, y: 480 },
   ]);
-  await ensureRoom(f1.id, "F1-ICU", "ICU Bay 1 (demo)", "ICU", [
+  await ensureRoom(f1.id, "F1-ICU", "ICU Bay 1 (sample — rename me)", "ICU", [
     { x: 100, y: 100 }, { x: 700, y: 100 }, { x: 700, y: 500 }, { x: 100, y: 500 },
   ]);
-  await ensureRoom(f1.id, "F1-LAB", "Pathology Lab (demo)", "LAB", [
+  await ensureRoom(f1.id, "F1-LAB", "Pathology Lab (sample — rename me)", "LAB", [
     { x: 750, y: 100 }, { x: 1200, y: 100 }, { x: 1200, y: 400 }, { x: 750, y: 400 },
   ]);
 

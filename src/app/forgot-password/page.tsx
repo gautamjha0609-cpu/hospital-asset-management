@@ -1,7 +1,8 @@
 "use client";
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { Building2, ArrowLeft, MailCheck } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, MailCheck } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   return (
@@ -39,10 +40,14 @@ function ForgotInner() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="mt-3 text-xl font-semibold text-gray-900">Reset your password</h1>
+          <Image
+            src="/brand/logo-640.png"
+            alt="CK Birla Hospitals | Rukmani Birla Hospital"
+            width={480}
+            height={140}
+            className="mx-auto w-56 h-auto"
+          />
+          <h1 className="mt-4 text-lg font-semibold text-gray-900">Reset your password</h1>
           <p className="text-sm text-gray-500">
             Enter your account email — we'll send you a link.
           </p>

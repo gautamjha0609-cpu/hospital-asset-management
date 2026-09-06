@@ -30,18 +30,18 @@ export async function POST(req: NextRequest) {
       const emailBody = [
         `Hi ${user.name ?? user.email},`,
         "",
-        "Someone requested a password reset for your HospitalAM account.",
+        "Someone requested a password reset for your RBH Assets account.",
         "If it wasn't you, ignore this email — the link expires in 1 hour and can only be used once.",
         "",
         "Reset link:",
         link,
         "",
-        "— HospitalAM",
+        "— CK Birla Hospitals · Rukmani Birla Hospital",
       ].join("\n");
       // Don't block the response if email transport is slow — we log any error.
       const result = await sendEmail({
         to: user.email,
-        subject: "Reset your HospitalAM password",
+        subject: "Reset your RBH Assets password",
         text: emailBody,
       });
       if (!result.ok) {

@@ -1,13 +1,13 @@
 {
-  "name": "Hospital Asset Management",
-  "short_name": "HospitalAM",
-  "description": "Map, track, and manage hospital assets across buildings and floors.",
+  "name": "RBH Assets — CK Birla Hospitals",
+  "short_name": "RBH Assets",
+  "description": "Map, track, and manage assets at Rukmani Birla Hospital (CK Birla Hospitals).",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f9fafb",
-  "theme_color": "#2563eb",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1f2a44",
   "categories": ["productivity", "medical", "business"],
   "icons": [
     { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
@@ -16,7 +16,7 @@
     { "src": "/icons/icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" }
   ],
   "shortcuts": [
-    { "name": "Scan / Search", "url": "/search", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Scan asset", "url": "/scan", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Assets", "url": "/assets", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Map", "url": "/map", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]

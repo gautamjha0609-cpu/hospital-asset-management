@@ -19,7 +19,7 @@ export type EmailResult =
   | { ok: false; error: string };
 
 const DRIVER = (process.env.EMAIL_DRIVER as "resend" | "console") ?? "console";
-const FROM = process.env.EMAIL_FROM ?? "HospitalAM <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM ?? "RBH Assets <onboarding@resend.dev>";
 
 export async function sendEmail(msg: EmailPayload): Promise<EmailResult> {
   if (DRIVER === "resend") {

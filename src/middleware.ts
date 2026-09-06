@@ -30,6 +30,6 @@ export const config = {
     // Next internals, favicon, PWA icons/manifest/service-worker,
     // brand images, and the QR image endpoint (which needs to be
     // scannable from unauthenticated devices — e.g. printed stickers).
-    "/((?!login|forgot-password|reset-password|api/auth|_next|favicon\\.ico|favicon\\.png|manifest\\.webmanifest|sw\\.js|icons/|brand/|assets/.*/qr).*)",
+    "/((?!login|forgot-password|reset-password|api/auth|api/cron|_next|favicon\\.ico|favicon\\.png|manifest\\.webmanifest|sw\\.js|icons/|brand/|monitoring|assets/.*/qr).*)",
   ],
 };

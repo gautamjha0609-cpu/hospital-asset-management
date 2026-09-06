@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ScanLine,
+  Activity,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -34,6 +35,7 @@ const adminNav = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/fields", label: "Custom fields", icon: ShieldCheck },
   { href: "/admin/audit", label: "Audit log", icon: History },
+  { href: "/admin/system", label: "System health", icon: Activity },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

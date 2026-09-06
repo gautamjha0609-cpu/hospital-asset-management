@@ -32,8 +32,10 @@ model User {
 
   createdAssets  Asset[]           @relation("AssetCreatedBy")
   updatedAssets  Asset[]           @relation("AssetUpdatedBy")
+  verifiedAssets Asset[]           @relation("AssetVerifiedBy")
   auditLogs      AuditLog[]
   movements      AssetLocationHistory[] @relation("MovedByUser")
+  verifications  AssetVerification[]
   importJobs     ImportJob[]
 }
 
@@ -244,6 +246,10 @@ model Asset {
   createdById         String?
   updatedById         String?
 
+  // Physical verification
+  lastVerifiedAt      DateTime?
+  lastVerifiedById    String?
+
   majorCategory       MajorCategory? @relation(fields: [majorCategoryId], references: [id], onDelete: SetNull)
   finalCategory       FinalCategory? @relation(fields: [finalCategoryId], references: [id], onDelete: SetNull)
   subCategory         SubCategory?   @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
@@ -254,6 +260,8 @@ model Asset {
   room                Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
   createdBy           User?          @relation("AssetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy           User?          @relation("AssetUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  lastVerifiedBy      User?          @relation("AssetVerifiedBy", fields: [lastVerifiedById], references: [id], onDelete: SetNull)
+  verifications       AssetVerification[]
 
   purchaseLine        AssetPurchaseLine?
   depreciations       AssetDepreciation[]
@@ -443,6 +451,29 @@ model AssetLocationHistory {
 
   @@index([assetId])
   @@index([movedAt])
+}
+
+// One row per verification event. Kept separate from AssetLocationHistory
+// so a walk-through that confirms "still here" doesn't clutter the move
+// timeline, and a room-verification session can be looked up as a batch.
+model AssetVerification {
+  id            String   @id @default(cuid())
+  assetId       String
+  roomId        String?
+  outcome       String   // PRESENT | MISSING | MOVED | CONDEMNED | UNDER_REPAIR
+  notes         String?
+  photoPath     String?  // storage key; may be a full URL for blob driver
+  verifiedAt    DateTime @default(now())
+  verifiedById  String?
+  batchId       String?  // groups verifications from a single walk-through session
+
+  asset         Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  verifiedBy    User?  @relation(fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([assetId])
+  @@index([roomId])
+  @@index([batchId])
+  @@index([verifiedAt])
 }
 
 model AssetStatusHistory {

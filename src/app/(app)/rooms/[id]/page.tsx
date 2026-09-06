@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import { ROOM_TYPE_LABEL, type RoomType } from "@/lib/location";
 import { displayName } from "@/lib/asset";
+import { getCurrentUser } from "@/lib/auth";
+import { ClipboardCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,7 @@ export default async function RoomPage(props: {
   searchParams: Promise<{ type?: string }>;
 }) {
   const { id } = await props.params;
+  const user = await getCurrentUser();
   const room = await prisma.room.findUnique({
     where: { id },
     include: {
@@ -44,9 +47,16 @@ export default async function RoomPage(props: {
           <h1 className="text-2xl font-semibold">{room.name}</h1>
           <p className="text-sm text-gray-500">Code {room.code}</p>
         </div>
-        <Link href={`/floors/${room.floor.id}`} className="btn-secondary">
-          View on map
-        </Link>
+        <div className="flex gap-2 flex-wrap">
+          <Link href={`/floors/${room.floor.id}`} className="btn-secondary">
+            View on map
+          </Link>
+          {user && (
+            <Link href={`/rooms/${room.id}/verify`} className="btn-primary">
+              <ClipboardCheck className="h-4 w-4" /> Verify room
+            </Link>
+          )}
+        </div>
       </div>
 
       <section className="grid gap-3 grid-cols-2 md:grid-cols-4">

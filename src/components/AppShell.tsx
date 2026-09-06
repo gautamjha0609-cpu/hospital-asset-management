@@ -15,12 +15,14 @@ import {
   LogOut,
   Menu,
   X,
+  ScanLine,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/scan", label: "Scan asset", icon: ScanLine },
   { href: "/assets", label: "Assets", icon: Package },
   { href: "/buildings", label: "Buildings", icon: Building2 },
   { href: "/map", label: "Map", icon: Map },

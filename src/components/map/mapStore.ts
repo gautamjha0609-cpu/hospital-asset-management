@@ -44,6 +44,14 @@ export type LocalAssetMarker = {
   y: number;
 };
 
+export type UnplacedAsset = {
+  id: string;
+  publicId: string;
+  label: string;
+  status: string;
+  roomId: string | null;
+};
+
 interface MapState {
   floorId: string;
   planWidth: number;
@@ -58,6 +66,7 @@ interface MapState {
   rooms: LocalRoom[];
   mapObjects: LocalMapObject[];
   assets: LocalAssetMarker[];
+  unplaced: UnplacedAsset[];
 
   draftPoints: Point[];
 
@@ -76,6 +85,7 @@ interface MapState {
   moveAsset: (id: string, x: number, y: number) => void;
   addWall: (a: Point, b: Point) => void;
   removeObject: (id: string) => void;
+  placeAsset: (assetId: string, x: number, y: number) => void;
   hydrate: (payload: {
     floorId: string;
     planWidth: number;
@@ -83,6 +93,7 @@ interface MapState {
     rooms: LocalRoom[];
     mapObjects: LocalMapObject[];
     assets: LocalAssetMarker[];
+    unplaced: UnplacedAsset[];
   }) => void;
 }
 
@@ -104,6 +115,7 @@ export const useMapStore = create<MapState>()(
     rooms: [],
     mapObjects: [],
     assets: [],
+    unplaced: [],
     draftPoints: [],
 
     setMode: (m) => set({ mode: m, draftPoints: [] }),
@@ -163,6 +175,25 @@ export const useMapStore = create<MapState>()(
 
     removeObject: (id) =>
       set((s) => ({ mapObjects: s.mapObjects.filter((o) => o.id !== id) })),
+
+    placeAsset: (assetId, x, y) =>
+      set((s) => {
+        const u = s.unplaced.find((a) => a.id === assetId);
+        if (!u) return s;
+        const marker: LocalAssetMarker = {
+          id: u.id,
+          publicId: u.publicId,
+          label: u.label,
+          status: u.status,
+          x,
+          y,
+        };
+        return {
+          assets: [...s.assets, marker],
+          unplaced: s.unplaced.filter((a) => a.id !== assetId),
+          selectedAssetId: assetId,
+        };
+      }),
 
     hydrate: (payload) => set(payload),
   }), { limit: 100 })

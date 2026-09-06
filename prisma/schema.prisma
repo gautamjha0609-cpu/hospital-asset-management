@@ -250,6 +250,11 @@ model Asset {
   lastVerifiedAt      DateTime?
   lastVerifiedById    String?
 
+  // For movable assets: rooms where this asset is typically found. JSON
+  // string of an array of room IDs (kept as JSON not a relation so the
+  // list stays lightweight and simple to render/edit).
+  expectedRoomIds     String?
+
   majorCategory       MajorCategory? @relation(fields: [majorCategoryId], references: [id], onDelete: SetNull)
   finalCategory       FinalCategory? @relation(fields: [finalCategoryId], references: [id], onDelete: SetNull)
   subCategory         SubCategory?   @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)

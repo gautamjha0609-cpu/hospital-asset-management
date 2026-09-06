@@ -21,6 +21,7 @@ import {
   useMapUndo,
   type Point,
   type LocalRoom,
+  type UnplacedAsset,
 } from "./mapStore";
 import { polygonCentroid, ROOM_TYPE_LABEL, ROOM_TYPES } from "@/lib/location";
 
@@ -47,6 +48,14 @@ type Props = {
     x: number;
     y: number;
   }[];
+  unplacedAssets: {
+    id: string;
+    publicId: string;
+    label: string;
+    status: string;
+    roomId: string | null;
+  }[];
+  rooms: { id: string; name: string; code: string }[];
 };
 
 export function FloorMap(props: Props) {
@@ -63,6 +72,7 @@ export function FloorMap(props: Props) {
     rooms,
     mapObjects,
     assets,
+    unplaced,
     draftPoints,
     addDraftPoint,
     cancelDraft,
@@ -77,6 +87,7 @@ export function FloorMap(props: Props) {
     addWall,
     removeObject,
     moveAsset,
+    placeAsset,
   } = useMapStore();
   const undo = useMapUndo();
 
@@ -111,6 +122,7 @@ export function FloorMap(props: Props) {
         data: safeJson(o.data),
       })),
       assets: props.initialAssets,
+      unplaced: props.unplacedAssets,
     });
   }, [
     hydrate,
@@ -122,7 +134,12 @@ export function FloorMap(props: Props) {
     props.initialAssets,
   ]);
 
+  const [placingId, setPlacingId] = useState<string | null>(null);
   const viewBox = `0 0 ${props.planWidth} ${props.planHeight}`;
+  const roomsById = useMemo(
+    () => Object.fromEntries(props.rooms.map((r) => [r.id, r])),
+    [props.rooms]
+  );
 
   // Map screen coords -> svg coords
   function toSvg(evt: React.PointerEvent | React.MouseEvent): Point {
@@ -141,6 +158,11 @@ export function FloorMap(props: Props) {
   function onSvgClick(e: React.MouseEvent) {
     if (!props.isAdmin) return;
     const p = toSvg(e);
+    if (placingId) {
+      placeAsset(placingId, p.x, p.y);
+      setPlacingId(null);
+      return;
+    }
     if (mode === "DRAW_ROOM") {
       addDraftPoint(p);
     } else if (mode === "DRAW_WALL") {
@@ -313,6 +335,13 @@ export function FloorMap(props: Props) {
         {saveMsg && <span className="text-xs text-gray-500 ml-2">{saveMsg}</span>}
       </div>
 
+      {placingId && (
+        <div className="rounded-md border border-brand-200 bg-brand-50 p-2 text-xs text-brand-900 flex items-center gap-2">
+          <span>Click on the map to place this asset.</span>
+          <button className="btn-ghost text-xs" onClick={() => setPlacingId(null)}>Cancel</button>
+        </div>
+      )}
+
       <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
         <div className="card overflow-hidden">
           <div
@@ -470,11 +499,11 @@ export function FloorMap(props: Props) {
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                  Assets ({assets.length})
+                  Placed ({assets.length})
                 </div>
-                <ul className="max-h-64 overflow-auto divide-y divide-gray-100">
+                <ul className="max-h-40 overflow-auto divide-y divide-gray-100">
                   {assets.length === 0 && (
-                    <li className="py-2 text-sm text-gray-500">No assets placed on this floor.</li>
+                    <li className="py-2 text-sm text-gray-500">No assets placed yet.</li>
                   )}
                   {assets.slice(0, 40).map((a) => (
                     <li key={a.id}>
@@ -489,6 +518,15 @@ export function FloorMap(props: Props) {
                   ))}
                 </ul>
               </div>
+              {props.isAdmin && (
+                <UnplacedList
+                  unplaced={unplaced}
+                  roomsById={roomsById}
+                  placingId={placingId}
+                  onPickPlace={(id) => setPlacingId((cur) => (cur === id ? null : id))}
+                  onPlaceCentre={(id) => placeAsset(id, props.planWidth / 2, props.planHeight / 2)}
+                />
+              )}
             </>
           )}
         </div>
@@ -662,6 +700,77 @@ function RoomCreateDialog({
           <button className="btn-primary" onClick={() => onCreate({ name, code, type })}>Create</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function UnplacedList({
+  unplaced,
+  roomsById,
+  placingId,
+  onPickPlace,
+  onPlaceCentre,
+}: {
+  unplaced: UnplacedAsset[];
+  roomsById: Record<string, { name: string; code: string }>;
+  placingId: string | null;
+  onPickPlace: (id: string) => void;
+  onPlaceCentre: (id: string) => void;
+}) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+        Unplaced ({unplaced.length})
+      </div>
+      {unplaced.length === 0 ? (
+        <p className="text-xs text-gray-500 py-1">
+          All assets in this floor's rooms are placed on the map.
+        </p>
+      ) : (
+        <ul className="max-h-56 overflow-auto divide-y divide-gray-100">
+          {unplaced.slice(0, 60).map((a) => {
+            const room = a.roomId ? roomsById[a.roomId] : undefined;
+            const isPlacing = placingId === a.id;
+            return (
+              <li key={a.id} className="py-2 px-1 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate">{a.label}</div>
+                    <div className="text-[11px] text-gray-500">
+                      {room ? `${room.name} (${room.code})` : "no room"}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      className={`btn text-xs px-2 py-1 ${
+                        isPlacing
+                          ? "bg-brand-600 text-white hover:bg-brand-700"
+                          : "border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+                      }`}
+                      onClick={() => onPickPlace(a.id)}
+                      title="Click on the map to place"
+                    >
+                      {isPlacing ? "Cancel" : "Place"}
+                    </button>
+                    <button
+                      className="btn border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs px-2 py-1"
+                      onClick={() => onPlaceCentre(a.id)}
+                      title="Place at map centre"
+                    >
+                      ▣
+                    </button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {unplaced.length > 60 && (
+        <p className="text-[11px] text-gray-500 mt-1">
+          Showing first 60. Assign more via the bulk-assign tool on /assets.
+        </p>
+      )}
     </div>
   );
 }

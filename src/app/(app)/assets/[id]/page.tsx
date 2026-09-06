@@ -14,6 +14,7 @@ import {
   Package,
 } from "lucide-react";
 import { AssetFilesPanel } from "@/components/AssetFilesPanel";
+import { ExpectedRoomsEditor } from "@/components/ExpectedRoomsEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,83 @@ export default async function AssetDetailPage(props: {
     },
   });
   if (!asset) notFound();
+
+  // Sibling line items — assets purchased on the same PO Identical-Line
+  // Group, or (when no PO data exists) matching vendor + cost + name.
+  const poGroupId = asset.purchaseLine?.poIdenticalLineGroup;
+  const poNumber = asset.purchaseLine?.poNumber;
+  let siblings: {
+    id: string;
+    publicId: string;
+    name: string | null;
+    description: string;
+    tagCode: string | null;
+    status: string;
+    room: { id: string; name: string; code: string } | null;
+  }[] = [];
+  if (poGroupId != null && poNumber) {
+    siblings = await prisma.asset.findMany({
+      where: {
+        id: { not: asset.id },
+        purchaseLine: { poIdenticalLineGroup: poGroupId, poNumber },
+      },
+      select: {
+        id: true, publicId: true, name: true, description: true,
+        tagCode: true, status: true,
+        room: { select: { id: true, name: true, code: true } },
+      },
+      take: 200,
+    });
+  } else if (asset.vendorId && asset.costGrossBlock > 0) {
+    siblings = await prisma.asset.findMany({
+      where: {
+        id: { not: asset.id },
+        vendorId: asset.vendorId,
+        costGrossBlock: asset.costGrossBlock,
+        OR: [
+          { name: asset.name },
+          { description: asset.description },
+        ],
+      },
+      select: {
+        id: true, publicId: true, name: true, description: true,
+        tagCode: true, status: true,
+        room: { select: { id: true, name: true, code: true } },
+      },
+      take: 200,
+    });
+  }
+
+  // Expected rooms — only load room lookup for movable assets, and only
+  // when the asset has any ids stored.
+  let expectedRoomsData: {
+    ids: string[];
+    byId: Record<string, { id: string; name: string; code: string; floorName?: string; buildingName?: string }>;
+    all: { id: string; name: string; code: string; floorName?: string; buildingName?: string }[];
+  } = { ids: [], byId: {}, all: [] };
+  if (asset.assetType === "MOVABLE") {
+    let ids: string[] = [];
+    try {
+      ids = asset.expectedRoomIds ? JSON.parse(asset.expectedRoomIds) : [];
+      if (!Array.isArray(ids)) ids = [];
+    } catch {
+      ids = [];
+    }
+    const roomsList = await prisma.room.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true, name: true, code: true,
+        floor: { select: { name: true, building: { select: { name: true } } } },
+      },
+    });
+    const flat = roomsList.map((r) => ({
+      id: r.id, name: r.name, code: r.code,
+      floorName: r.floor.name,
+      buildingName: r.floor.building.name,
+    }));
+    const byId = Object.fromEntries(flat.map((r) => [r.id, r]));
+    expectedRoomsData = { ids, byId, all: flat };
+  }
 
   return (
     <div className="space-y-6">
@@ -270,6 +348,70 @@ export default async function AssetDetailPage(props: {
           )}
         </div>
       </section>
+
+      {asset.assetType === "MOVABLE" && (
+        <section className="card p-5">
+          <h2 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <MapPin className="h-4 w-4" /> Likely to be found in
+          </h2>
+          <p className="text-xs text-gray-500 mb-3">
+            This is a movable asset. Add rooms it usually rotates between so
+            staff know where to check.
+          </p>
+          <ExpectedRoomsEditor
+            assetPublicId={asset.publicId}
+            initialRoomIds={expectedRoomsData.ids}
+            roomsById={expectedRoomsData.byId}
+            allRooms={expectedRoomsData.all}
+            canEdit={user?.role === "ADMIN"}
+          />
+        </section>
+      )}
+
+      {siblings.length > 0 && (
+        <section className="card p-5">
+          <h2 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <Package className="h-4 w-4" /> Part of a group of {siblings.length + 1} identical units
+          </h2>
+          <p className="text-xs text-gray-500 mb-3">
+            {poNumber
+              ? <>Purchased on the same PO line (<span className="font-mono">{poNumber}</span>). Each unit is its own asset with its own URL and can be located and verified independently.</>
+              : "These assets share the same vendor, price, and description — likely the same purchase in bulk."}
+          </p>
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Tag</th>
+                  <th>Room</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {siblings.map((s) => (
+                  <tr key={s.id}>
+                    <td className="font-mono text-xs">{s.tagCode ?? s.publicId.slice(0, 8)}</td>
+                    <td className="text-xs">
+                      {s.room ? (
+                        <Link href={`/rooms/${s.room.id}`} className="text-brand-700 hover:underline">
+                          {s.room.name} ({s.room.code})
+                        </Link>
+                      ) : (
+                        <span className="text-gray-400">Unassigned</span>
+                      )}
+                    </td>
+                    <td className="text-xs">{s.status}</td>
+                    <td className="text-right">
+                      <Link href={`/assets/${s.publicId}`} className="text-xs text-brand-700 hover:underline">Open</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <AssetFilesPanel
         assetPublicId={asset.publicId}

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { AssetFilters } from "@/components/AssetFilters";
 import type { Prisma } from "@prisma/client";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, Layers } from "lucide-react";
 import { AssetsListClient } from "@/components/AssetsListClient";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,9 @@ export default async function AssetsPage(props: {
   const finalCategoryId = sp.finalCategoryId;
   const departmentId = sp.departmentId;
   const buildingId = sp.buildingId;
+  const floorId = sp.floorId;
   const roomId = sp.roomId;
+  const roomType = sp.roomType;
   const assetType = sp.assetType;
   const status = sp.status;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
@@ -38,12 +40,15 @@ export default async function AssetsPage(props: {
   if (majorCategoryId) where.majorCategoryId = majorCategoryId;
   if (finalCategoryId) where.finalCategoryId = finalCategoryId;
   if (departmentId) where.departmentId = departmentId;
-  if (buildingId) where.floor = { buildingId };
+  if (buildingId || floorId) {
+    where.floor = { ...(buildingId ? { buildingId } : {}), ...(floorId ? { id: floorId } : {}) };
+  }
   if (roomId) where.roomId = roomId;
+  if (roomType) where.room = { type: roomType };
   if (assetType) where.assetType = assetType;
   if (status) where.status = status;
 
-  const [total, assets, majors, finals, departments, buildings, buildingsFull] = await Promise.all([
+  const [total, assets, majors, finals, departments, buildingsFull] = await Promise.all([
     prisma.asset.count({ where }),
     prisma.asset.findMany({
       where,
@@ -68,7 +73,6 @@ export default async function AssetsPage(props: {
     prisma.majorCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.finalCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.department.findMany({ orderBy: { name: "asc" } }),
-    prisma.building.findMany({ orderBy: { name: "asc" } }),
     prisma.building.findMany({
       orderBy: { name: "asc" },
       select: {
@@ -104,6 +108,9 @@ export default async function AssetsPage(props: {
           <p className="text-sm text-gray-500">{total.toLocaleString("en-IN")} total</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Link href={`/assets/grouped?${qs.toString()}`} className="btn-secondary">
+            <Layers className="h-4 w-4" /> Grouped view
+          </Link>
           {user?.role === "ADMIN" && (
             <Link href="/assets/new" className="btn-primary">
               <Plus className="h-4 w-4" /> New asset
@@ -119,7 +126,7 @@ export default async function AssetsPage(props: {
         majors={majors}
         finals={finals}
         departments={departments}
-        buildings={buildings}
+        buildings={buildingsFull}
       />
 
       <AssetsListClient

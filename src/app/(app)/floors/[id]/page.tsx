@@ -18,17 +18,22 @@ export default async function FloorPage(props: {
       rooms: true,
       mapObjects: true,
       assets: {
-        where: { mapX: { not: null }, mapY: { not: null } },
+        // All assets currently assigned to a room on this floor (placed
+        // or unplaced) — the map lets admins drag unplaced ones onto the
+        // canvas.
         select: {
           id: true,
           publicId: true,
           description: true,
+          name: true,
           tagCode: true,
           status: true,
           mapX: true,
           mapY: true,
+          roomId: true,
         },
-        take: 500,
+        take: 1000,
+        orderBy: [{ mapX: "asc" }, { tagCode: "asc" }],
       },
     },
   });
@@ -74,14 +79,26 @@ export default async function FloorPage(props: {
           kind: o.kind,
           data: o.data,
         }))}
-        initialAssets={floor.assets.map((a) => ({
-          id: a.id,
-          publicId: a.publicId,
-          label: a.tagCode ?? a.description.slice(0, 60),
-          status: a.status,
-          x: a.mapX ?? 100,
-          y: a.mapY ?? 100,
-        }))}
+        initialAssets={floor.assets
+          .filter((a) => a.mapX != null && a.mapY != null)
+          .map((a) => ({
+            id: a.id,
+            publicId: a.publicId,
+            label: a.name ?? a.tagCode ?? a.description.slice(0, 60),
+            status: a.status,
+            x: a.mapX ?? 100,
+            y: a.mapY ?? 100,
+          }))}
+        unplacedAssets={floor.assets
+          .filter((a) => a.mapX == null || a.mapY == null)
+          .map((a) => ({
+            id: a.id,
+            publicId: a.publicId,
+            label: a.name ?? a.tagCode ?? a.description.slice(0, 60),
+            status: a.status,
+            roomId: a.roomId,
+          }))}
+        rooms={floor.rooms.map((r) => ({ id: r.id, name: r.name, code: r.code }))}
       />
     </div>
   );

@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RBH Assets — Executive Dashboard (Power BI mockup)</title>
+<style>
+  :root {
+    --navy: #1F2A44;
+    --navy-2: #2E3B5C;
+    --red: #DE2843;
+    --green: #10B981;
+    --amber: #F59E0B;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-500: #6B7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --card: #FFFFFF;
+    --accent-blue: #3B82F6;
+    --accent-purple: #8B5CF6;
+    --accent-teal: #14B8A6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", -apple-system, "Helvetica Neue", sans-serif;
+    background: #E7EAF0;
+    color: var(--gray-900);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Power-BI-style top ribbon */
+  .ribbon {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    height: 46px;
+    font-size: 12px;
+    color: var(--gray-700);
+  }
+  .ribbon .pbi {
+    background: #F2C811;
+    color: #333;
+    padding: 3px 8px;
+    font-weight: 700;
+    font-size: 11px;
+    border-radius: 3px;
+    margin-right: 12px;
+  }
+  .ribbon .title { font-weight: 600; color: var(--gray-900); }
+  .ribbon .subtitle { margin-left: 8px; color: var(--gray-500); font-size: 11px; }
+  .ribbon .spacer { flex: 1; }
+  .ribbon .badge {
+    background: var(--gray-100);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .header {
+    background: linear-gradient(90deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: white;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header .logo {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: 1px;
+  }
+  .header .logo .ck { color: var(--red); }
+  .header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
+  .header .sub { font-size: 12px; opacity: 0.8; }
+  .header .spacer { flex: 1; }
+  .header .filter-chip {
+    background: rgba(255,255,255,0.08);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* Page tabs — like Power BI report pages */
+  .tabs {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    padding: 0 20px;
+    gap: 4px;
+  }
+  .tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--gray-500);
+    border-bottom: 2px solid transparent;
+    cursor: default;
+  }
+  .tab.active {
+    color: var(--navy);
+    border-bottom-color: var(--red);
+    font-weight: 600;
+  }
+
+  .canvas {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .card h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--gray-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi { display: flex; flex-direction: column; }
+  .kpi .value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--gray-900);
+    line-height: 1;
+    margin-top: 4px;
+  }
+  .kpi .delta { font-size: 12px; margin-top: 6px; }
+  .kpi .delta.up { color: var(--green); }
+  .kpi .delta.down { color: var(--red); }
+  .kpi.hero .value { font-size: 34px; color: var(--navy); }
+  .kpi.risk .value { color: var(--red); }
+  .kpi.ok .value { color: var(--green); }
+  .kpi.warn .value { color: var(--amber); }
+
+  /* Column spans */
+  .c3 { grid-column: span 3; }
+  .c4 { grid-column: span 4; }
+  .c6 { grid-column: span 6; }
+  .c8 { grid-column: span 8; }
+  .c12 { grid-column: span 12; }
+
+  /* Bar chart via CSS */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .bar-row { display: grid; grid-template-columns: 140px 1fr 100px; gap: 12px; align-items: center; font-size: 12px; }
+  .bar-row .label { color: var(--gray-700); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .bar-track {
+    background: var(--gray-100);
+    border-radius: 3px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-row .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--navy);
+  }
+  .bar-row .bar-fill.red { background: var(--red); }
+  .bar-row .bar-fill.blue { background: var(--accent-blue); }
+  .bar-row .bar-fill.teal { background: var(--accent-teal); }
+  .bar-row .value {
+    text-align: right;
+    font-weight: 600;
+    color: var(--gray-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Donut via conic-gradient */
+  .donut-wrap { display: flex; gap: 20px; align-items: center; margin-top: 8px; }
+  .donut {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--navy) 0deg 220deg,
+      var(--red) 220deg 320deg,
+      var(--amber) 320deg 350deg,
+      var(--gray-200) 350deg 360deg
+    );
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+  .donut::after {
+    content: "";
+    width: 84px; height: 84px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+  }
+  .donut-center {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+  .donut-center .num { font-size: 22px; line-height: 1; }
+  .donut-center .lbl { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; }
+  .legend { flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+  .legend .row { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; }
+  .legend .dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Sparkline */
+  .spark { width: 100%; height: 40px; margin-top: 6px; }
+
+  /* Trend line */
+  .trend {
+    width: 100%;
+    height: 180px;
+    margin-top: 6px;
+  }
+
+  /* Heatmap */
+  .heat {
+    display: grid;
+    grid-template-columns: 100px repeat(8, 1fr);
+    gap: 2px;
+    font-size: 10px;
+    margin-top: 10px;
+  }
+  .heat .h {
+    background: var(--gray-100);
+    padding: 6px 4px;
+    color: var(--gray-700);
+    font-weight: 600;
+    text-align: center;
+  }
+  .heat .rl { padding: 6px 4px; color: var(--gray-700); }
+  .heat .cell {
+    padding: 8px 4px;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    border-radius: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Table */
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  table.data th {
+    text-align: left;
+    padding: 6px 8px;
+    background: var(--gray-50);
+    color: var(--gray-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  table.data td {
+    padding: 8px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+  }
+  table.data td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--gray-900); }
+  table.data td .status.red { background: #FEE2E2; color: #B91C1C; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  table.data td .status.amber { background: #FEF3C7; color: #B45309; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  table.data td .status.green { background: #D1FAE5; color: #047857; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+
+  .mock-note {
+    background: #FEF3C7;
+    border-left: 3px solid var(--amber);
+    padding: 12px 16px;
+    margin: 20px;
+    font-size: 12px;
+    color: #78350F;
+    border-radius: 3px;
+  }
+  .mock-note b { color: #78350F; }
+</style>
+</head>
+<body>
+
+<div class="ribbon">
+  <span class="pbi">Power BI</span>
+  <span class="title">RBH Assets — Executive Dashboard</span>
+  <span class="subtitle">Rukmani Birla Hospital · CK Birla Hospitals</span>
+  <div class="spacer"></div>
+  <span class="badge">Last refresh: 07-Sep-2026 08:30 IST</span>
+</div>
+
+<div class="header">
+  <div class="logo"><span class="ck">CK</span> Birla</div>
+  <div>
+    <h1>Fixed Assets — Live Executive View</h1>
+    <div class="sub">18,988 assets · 953 vendors · 5 departments · Data live from Postgres</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="filter-chip">FY 2024-25 ▾</div>
+  <div class="filter-chip">All departments ▾</div>
+  <div class="filter-chip">All categories ▾</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active">Executive Summary</div>
+  <div class="tab">Verification Progress</div>
+  <div class="tab">Depreciation & Net Block</div>
+  <div class="tab">Vendor & PO Analysis</div>
+  <div class="tab">By Department</div>
+</div>
+
+<div class="canvas">
+  <!-- KPI row -->
+  <div class="card c3 kpi hero">
+    <h3>Total Gross Block</h3>
+    <div class="value">₹278.44 Cr</div>
+    <div class="delta up">▲ 6.2% vs last FY</div>
+  </div>
+  <div class="card c3 kpi">
+    <h3>Net Block (WDV)</h3>
+    <div class="value">₹114.10 Cr</div>
+    <div class="delta down">▼ 3.1% vs last FY</div>
+  </div>
+  <div class="card c3 kpi">
+    <h3>Assets Tracked</h3>
+    <div class="value">18,988</div>
+    <div class="delta up">▲ 274 added</div>
+  </div>
+  <div class="card c3 kpi risk">
+    <h3>Value at Risk</h3>
+    <div class="value">₹4.86 Cr</div>
+    <div class="delta down">Missing + Condemned</div>
+  </div>
+
+  <!-- Gross block by fiscal year -->
+  <div class="card c8">
+    <h3>Gross Block Growth — FY 2017-18 to FY 2024-25</h3>
+    <svg class="trend" viewBox="0 0 800 180" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#1F2A44" stop-opacity="0.30"/>
+          <stop offset="1" stop-color="#1F2A44" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- gridlines -->
+      <line x1="40" y1="30" x2="780" y2="30" stroke="#F3F4F6"/>
+      <line x1="40" y1="70" x2="780" y2="70" stroke="#F3F4F6"/>
+      <line x1="40" y1="110" x2="780" y2="110" stroke="#F3F4F6"/>
+      <line x1="40" y1="150" x2="780" y2="150" stroke="#E5E7EB"/>
+      <!-- y labels -->
+      <text x="8" y="34" font-size="10" fill="#6B7280">300 Cr</text>
+      <text x="8" y="74" font-size="10" fill="#6B7280">250 Cr</text>
+      <text x="8" y="114" font-size="10" fill="#6B7280">200 Cr</text>
+      <text x="8" y="154" font-size="10" fill="#6B7280">180 Cr</text>
+      <!-- data -->
+      <path d="M40,140 L145,132 L250,120 L355,105 L460,88 L565,68 L670,50 L775,32
+               L775,150 L40,150 Z" fill="url(#grad)"/>
+      <polyline points="40,140 145,132 250,120 355,105 460,88 565,68 670,50 775,32"
+                fill="none" stroke="#1F2A44" stroke-width="2.5"/>
+      <g fill="#DE2843">
+        <circle cx="40" cy="140" r="3.5"/>
+        <circle cx="145" cy="132" r="3.5"/>
+        <circle cx="250" cy="120" r="3.5"/>
+        <circle cx="355" cy="105" r="3.5"/>
+        <circle cx="460" cy="88" r="3.5"/>
+        <circle cx="565" cy="68" r="3.5"/>
+        <circle cx="670" cy="50" r="3.5"/>
+        <circle cx="775" cy="32" r="4.5" stroke="white" stroke-width="2"/>
+      </g>
+      <!-- x labels -->
+      <g font-size="10" fill="#6B7280" text-anchor="middle">
+        <text x="40" y="172">17-18</text>
+        <text x="145" y="172">18-19</text>
+        <text x="250" y="172">19-20</text>
+        <text x="355" y="172">20-21</text>
+        <text x="460" y="172">21-22</text>
+        <text x="565" y="172">22-23</text>
+        <text x="670" y="172">23-24</text>
+        <text x="775" y="172">24-25</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Movable / Immovable donut -->
+  <div class="card c4">
+    <h3>Movable vs Immovable</h3>
+    <div class="donut-wrap">
+      <div class="donut"><div class="donut-center"><div class="num">61%</div><div class="lbl">Movable</div></div></div>
+      <div class="legend">
+        <div class="row"><span class="dot" style="background:#1F2A44"></span><span>Movable</span><b>11,583</b></div>
+        <div class="row"><span class="dot" style="background:#DE2843"></span><span>Immovable</span><b>5,412</b></div>
+        <div class="row"><span class="dot" style="background:#F59E0B"></span><span>WIP</span><b>1,617</b></div>
+        <div class="row"><span class="dot" style="background:#E5E7EB"></span><span>Other</span><b>376</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- By Major Category -->
+  <div class="card c6">
+    <h3>Gross Block by Major Category — ₹ Cr</h3>
+    <div class="bar-chart">
+      <div class="bar-row"><span class="label">Land &amp; Building</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="value">₹186.4 Cr</span></div>
+      <div class="bar-row"><span class="label">Plant &amp; Machinery</span><div class="bar-track"><div class="bar-fill" style="width:34%"></div></div><span class="value">₹71.2 Cr</span></div>
+      <div class="bar-row"><span class="label">IT Hardware &amp; software</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="value">₹12.4 Cr</span></div>
+      <div class="bar-row"><span class="label">Furniture &amp; Fixture</span><div class="bar-track"><div class="bar-fill" style="width:3%"></div></div><span class="value">₹5.9 Cr</span></div>
+      <div class="bar-row"><span class="label">Office Equipment</span><div class="bar-track"><div class="bar-fill" style="width:1.2%"></div></div><span class="value">₹2.5 Cr</span></div>
+      <div class="bar-row"><span class="label">Capital WIP</span><div class="bar-track"><div class="bar-fill red" style="width:0.4%"></div></div><span class="value">₹0.8 Cr</span></div>
+    </div>
+  </div>
+
+  <!-- By Department -->
+  <div class="card c6">
+    <h3>Assets by Department — count &amp; value</h3>
+    <div class="bar-chart">
+      <div class="bar-row"><span class="label">Biomedical</span><div class="bar-track"><div class="bar-fill blue" style="width:78%"></div></div><span class="value">2,041 · ₹58 Cr</span></div>
+      <div class="bar-row"><span class="label">Engineering</span><div class="bar-track"><div class="bar-fill blue" style="width:52%"></div></div><span class="value">1,388 · ₹38 Cr</span></div>
+      <div class="bar-row"><span class="label">IT</span><div class="bar-track"><div class="bar-fill blue" style="width:22%"></div></div><span class="value">570 · ₹16 Cr</span></div>
+      <div class="bar-row"><span class="label">Security</span><div class="bar-track"><div class="bar-fill blue" style="width:11%"></div></div><span class="value">308 · ₹8 Cr</span></div>
+      <div class="bar-row"><span class="label">F&amp;F</span><div class="bar-track"><div class="bar-fill blue" style="width:8%"></div></div><span class="value">223 · ₹6 Cr</span></div>
+      <div class="bar-row"><span class="label">Unassigned</span><div class="bar-track"><div class="bar-fill red" style="width:64%"></div></div><span class="value">14,458 · ₹152 Cr</span></div>
+    </div>
+  </div>
+
+  <!-- Verification progress -->
+  <div class="card c6">
+    <h3>Verification Progress — Last 90 days</h3>
+    <div style="margin-top:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+        <span style="color:var(--gray-500)">Verified in last 90 days</span>
+        <b>4,821 / 18,988 (25.4%)</b>
+      </div>
+      <div style="background:var(--gray-100); height:12px; border-radius:6px; overflow:hidden;">
+        <div style="width:25.4%; height:100%; background:linear-gradient(90deg,#10B981,#14B8A6);"></div>
+      </div>
+    </div>
+    <div class="bar-chart" style="margin-top:16px;">
+      <div class="bar-row"><span class="label">Biomedical</span><div class="bar-track"><div class="bar-fill teal" style="width:82%"></div></div><span class="value">82%</span></div>
+      <div class="bar-row"><span class="label">Engineering</span><div class="bar-track"><div class="bar-fill teal" style="width:41%"></div></div><span class="value">41%</span></div>
+      <div class="bar-row"><span class="label">IT</span><div class="bar-track"><div class="bar-fill teal" style="width:28%"></div></div><span class="value">28%</span></div>
+      <div class="bar-row"><span class="label">F&amp;F</span><div class="bar-track"><div class="bar-fill teal" style="width:12%"></div></div><span class="value">12%</span></div>
+      <div class="bar-row"><span class="label">Security</span><div class="bar-track"><div class="bar-fill teal" style="width:9%"></div></div><span class="value">9%</span></div>
+    </div>
+  </div>
+
+  <!-- Top vendors -->
+  <div class="card c6">
+    <h3>Top Vendors by Total Spend</h3>
+    <table class="data">
+      <thead>
+        <tr><th>Vendor</th><th>Assets</th><th>Total Value</th><th>Last PO</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Wipro GE Healthcare Ltd.</td><td>417</td><td class="num">₹42.1 Cr</td><td>Mar 2025</td></tr>
+        <tr><td>Techno Solutions</td><td>1,088</td><td class="num">₹18.7 Cr</td><td>Feb 2025</td></tr>
+        <tr><td>Healthware Pvt Ltd</td><td>84</td><td class="num">₹12.4 Cr</td><td>Nov 2024</td></tr>
+        <tr><td>Stj Electronics Pvt. Ltd</td><td>226</td><td class="num">₹8.9 Cr</td><td>Aug 2024</td></tr>
+        <tr><td>Siemens Healthcare</td><td>62</td><td class="num">₹7.3 Cr</td><td>Jul 2024</td></tr>
+        <tr><td>Others (948 vendors)</td><td>17,111</td><td class="num">₹189.0 Cr</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Attention needed -->
+  <div class="card c12">
+    <h3>Attention Needed — Top 8 Highest-Value Issues</h3>
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Tag</th>
+          <th>Asset</th>
+          <th>Department</th>
+          <th>Room</th>
+          <th>Value</th>
+          <th>Status</th>
+          <th>Last verified</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>RBH/2025-26/BME/2830</td><td>GE Voluson E10 USG Machine</td><td>Biomedical</td><td>ICU Bay 1</td><td class="num">₹64.2 L</td><td><span class="status red">MISSING</span></td><td>—</td></tr>
+        <tr><td>RBH/2025-26/BME/1625</td><td>I-LAB IVUS Polaris 2.10HD w/FFR+DFR</td><td>Biomedical</td><td>Cath Lab</td><td class="num">₹58.7 L</td><td><span class="status red">MISSING</span></td><td>15 Feb 2025</td></tr>
+        <tr><td>RBH/2025-26/BME/1904</td><td>Cranial &amp; Ortho Combined Navigation</td><td>Biomedical</td><td>OT-3</td><td class="num">₹52.0 L</td><td><span class="status amber">UNDER REPAIR</span></td><td>02 Sep 2026</td></tr>
+        <tr><td>RBH/2025-26/BME/2479</td><td>BK5000 Ultrasound System w/Transducers</td><td>Biomedical</td><td>Radiology</td><td class="num">₹9.0 L</td><td><span class="status green">PRESENT</span></td><td>07 Sep 2026</td></tr>
+        <tr><td>RBH/2025-26/ENG/8109</td><td>Chiller Unit A2 · 400 TR</td><td>Engineering</td><td>Roof deck</td><td class="num">₹28.0 L</td><td><span class="status amber">UNDER REPAIR</span></td><td>21 Aug 2026</td></tr>
+        <tr><td>RBH/2025-26/BME/1102</td><td>Alaris CC Syringe Infusion Pump</td><td>Biomedical</td><td>ICU Bay 1</td><td class="num">₹8.5 L</td><td><span class="status green">PRESENT</span></td><td>07 Sep 2026</td></tr>
+        <tr><td>RBH/2025-26/ENG/7712</td><td>DG Set — Cummins 750 kVA</td><td>Engineering</td><td>DG Room</td><td class="num">₹42.0 L</td><td><span class="status green">PRESENT</span></td><td>19 Aug 2026</td></tr>
+        <tr><td>RBH/2025-26/IT/4021</td><td>HPE ProLiant DL380 Gen11 · SAP Server</td><td>IT</td><td>Server Room</td><td class="num">₹18.4 L</td><td><span class="status red">CONDEMNED</span></td><td>10 Jul 2026</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="mock-note">
+  <b>Mockup — data illustrative.</b> This is a static preview of the Power BI executive
+  dashboard for RBH Assets. Once approved, the real dashboard connects live to the same
+  Postgres database that powers the data-collection app; every visual here has a
+  corresponding SQL view already prepared. Manager sees only Power BI — the collection
+  app stays with ward staff. Refreshes hourly (or on-demand from the ribbon).
+</div>
+
+</body>
+</html>
